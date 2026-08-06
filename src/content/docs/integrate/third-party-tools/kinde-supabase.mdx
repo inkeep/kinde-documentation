@@ -1,451 +1,296 @@
 ---
 page_id: 78f0242c-3a49-4c8d-8168-019fd69ef838
-title: Kinde and Supabase
+title: Add Kinde authentication to your Supabase project
+description: "Use Kinde as a custom OAuth provider for Supabase Auth—wire sign-in, sign-up, and logout in a Next.js app"
 sidebar:
   order: 7
+  label: Kinde and Supabase
+tableOfContents:
+  maxHeadingLevel: 3
 relatedArticles:
+  - a10aee46-af87-4ad1-b996-61ee6206c9eb
   - a07f8f6b-5d6a-4096-be52-7b13b4a3b0a5
   - 1023d9f8-ae2d-4167-98e0-a4aa7b31e80c
+topics:
+  - integrate
+  - third-party-tools
+  - oauth
+sdk: []
+languages:
+  - typescript
+  - javascript
+  - bash
+audience:
+  - developers
+complexity: intermediate
+keywords:
+  - supabase
+  - custom OAuth
+  - OIDC
+  - signInWithOAuth
+  - nextjs
+  - callback URL
+  - authentication
+updated: 2026-07-19
+featured: false
+deprecated: false
+ai_summary: "Guide to adding Kinde authentication to a Supabase project by configuring Kinde as a custom OAuth provider. Covers creating a Kinde back-end web application, enabling sign-in methods, and copying domain, client ID, and client secret. Walks through Supabase Auth custom provider setup with OIDC auto-discovery, issuer URL, scopes including offline_access for refresh tokens, and Allowed Callback URLs. Shows how to call signInWithOAuth with the custom:kinde provider and implement Next.js login, register, and logout buttons plus an OAuth callback route using the with-supabase starter. Includes steps to test registration and verify users appear in both Kinde and Supabase. Intended for developers integrating Kinde Auth with Supabase."
 ---
 
-User authentication and secure data access are critical components of modern web applications. Kinde simplifies the process by handling user authentication, managing session tokens, and offering robust user management features. 
+You can use Kinde as a custom OAuth provider in Supabase so users sign in with Kinde while Supabase manages the session in your app.
 
-When combined with Supabase's powerful database management and PostgreSQL’s Row-Level Security (RLS) policies, you can create a secure, scalable application that ensures user-specific data access.
-
-In this guide, we will walk through integrating Kinde and Supabase to build a personalized and secure to-do application. We’ll use Next.js as the application framework.
+This guide walks through connecting Kinde to Supabase Auth, then adding sign-in, sign-up, and logout to a Next.js app using Supabase’s `signInWithOAuth` method. When you’re done, you can build on this setup with a [to-do app](/integrate/third-party-tools/kinde-supabase-todo-app/).
 
 ## What you need
 
+- A [Kinde](/get-started/guides/first-things-first/) account with **Admin** or **Engineer** permissions (sign up for free)
 - A [Supabase](https://supabase.com/) account (sign up for free)
-- A [Kinde](https://kinde.com/) account (sign up for free)
 
-## Step 1: Set up your Kinde application
+## Quickstart
 
-1. [Sign in to Kinde](https://kinde.com/) and on the front page, select **Add application**.
-2. Enter a name for the application and select **Back-end web** as the application type. 
-3. Select **Save**. The **Quick start** page opens. 
-4. Select **NextJS** from the list of back-end SDKs, then select **Save**.
-5. On the **Quick Start** page, select either **Starter Kit** or **Existing codebase** and follow the setup steps. For either path:
-    1. Select **Set** for each default callback URL to configure your application's callback settings.
-        
-        ![Callback URLs in Kinde](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/e3452f72-18ad-4647-3f6f-20a7a7c43300/bloglarge)
-        
-    2. Copy the environment variables. We will use these later.
-        
-        ![Env variables from Kinde](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/e748137c-2db9-4f84-54fa-349d28245d00/public)
-        
-6. Select **Authentication** in the menu. 
-7. Enable the authentication types you want your users to sign in with (e.g. Email and Google), and select **Save**.
-    
-    ![Select auth options screen](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/6b0c12ba-6aec-4317-47c5-93b78a8afd00/public)
-    
+### 1. Set up a Kinde application
 
-## Step 2: Set up a Supabase project
+1. Sign in to your Kinde dashboard. On the home page, select **Add application**.
+2. Enter a name for the application (e.g., "Supabase") and select **Back-end web** as the application type. Select **Save**.
+3. Select **Other back end** from the SDK list, then select **Save**.
+4. Go to the **Authentication** page, enable the authentication methods you want (e.g., Email + Password, Google, Facebook), and select **Save**.
+5. Go to the **Details** page and copy the **Domain** (or [Custom domain](/build/domains/pointing-your-domain/)), **Client ID**, and **Client Secret**. You’ll need these in the next step.
+
+### 2. Configure your Supabase project
 
 1. Sign in to your [Supabase dashboard](https://supabase.com/).
-2. Select **New Project.**
-    1. Enter a project name.
-    2. Set a secure password for your database.
-    3. Select a database region that best suits your application. 
-    4. Select **Create new project**.
-        
-        ![Create new project in supabase](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/7bda4ee5-2fdd-4e88-5dea-0689e0eb8200/public)
-        
-3. In the Project settings, go to **Configuration** > **Data API.** Copy the following:
-    1. Project URL.
-    2. Project API Keys `anon`  `public`.
-    
-    ![Supabase API settings](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/ea73e26e-ed1d-4496-9c6a-a0eec8bba100/public)
-    
-4. Scroll to the **JWT Settings** section. 
-    
-    ![Supabase generate JWT secret](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/64ae994f-ad8a-4137-33ae-28656c265400/public)
-    
-5. Select **Generate a new secret**, then **Create my own secret**. You need to use the same secret as your application in Kinde.
-    
-    ![New JWT Secret](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/bd1ac5c1-c57b-43d6-08f3-66f3d8849300/public)
-    
-6. In Kinde, go to **Settings > Applications > Your application**, and copy the **Client Secret.** 
-7. Paste it into the **Custom JWT secret** field and select **Apply new JWT secret**.
-    
-    ![Apply new JWT secret](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/80307730-397b-4af6-9b3a-a7f1f2bc8700/public)
-    
-8. Still in Supabase, navigate to **SQL Editor** and paste the following SQL code into the command window and select **Run**:
-    
-    ```sql
-    -- Create the table
-    CREATE TABLE todos (
-      id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-      task TEXT NOT NULL,
-      user_id TEXT NOT NULL,
-      completed_state BOOLEAN DEFAULT FALSE
-    );
-    
-    -- Insert some sample data into the table
-    INSERT INTO todos (task, user_id, completed_state)
-    VALUES
-      ('Finish writing blog post', 'kp_123', FALSE),
-      ('Buy groceries', 'kp_456', TRUE),
-      ('Work out at the gym', 'kp_789', FALSE),
-      ('Read 10 pages of a book', 'kp_101', TRUE);
-    
-    -- Enable row-level security
-    ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
-    ```
-    
-    This command creates a `todos` table with the following columns:
-    
-    - **`task`**: with a type of **text**.
-    - **`user_id`**: with a type of **text**.
-    - **`completed_state`**: with a type of **boolean**. We use boolean because the completed state of each item is either true or false.
-    
-    It also inserts four sample todo items. We will need this for later.
-    
+2. If you don’t have a project yet, create one by selecting **New Project** and completing setup.
+3. Go to **Authentication > CONFIGURATION > Sign In / Providers**.
+4. Scroll down to the **Custom Providers** section and select **New Provider**. A window opens.
 
-## Step 3: Setup a NextJS project with Supabase and Kinde
+    ![supabase custom auth provider screen 1](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/b905dab8-efd7-441d-b055-4c5928f94f00/socialsharingimage)
+5. Enter the following details:
+    - **Provider Identifier**: `kinde`
+    - **Display Name**: (e.g., "Kinde")
+    - **Configuration Method**: Leave as **Auto-discovery (Recommended)**
+6. Enter the **Issuer URL**: `https://<your_business>.kinde.com` or your [Custom domain](/build/domains/pointing-your-domain/) if you have one.
+7. Enter the application details you copied from Kinde in the previous step:
+    - Client ID
+    - Client Secret
+    - Scopes: `openid, email, profile`
 
-1. Run the following command in your terminal window to start a new project with Next.js and Supabase. Follow the on-screen instructions.
-    
+        <Aside>
+        To get a refresh token, include the `offline` scope.
+        </Aside>
+
+    ![supabase custom auth provider screen 2](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/66af62b7-dc62-4758-db12-81c1767c8f00/socialsharingimage)
+8. Copy the **Callback URL** provided by Supabase. You’ll add this to Kinde next.
+9. Select **Update provider**.
+10. Go to your Kinde application **Details** page and paste the callback URL into the **Allowed Callback URLs** field. In the **Allowed logout redirect URLs** field, add your local and production app origins (for example, `http://localhost:3000` and `https://your-app.com`) so users return to your app after logout. Select **Save**.
+
+    ![supabase kinde callback url screen](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/43fe4fd7-e12c-4c8b-7b92-56ab47a62100/socialsharingimage)
+
+
+11. In your Supabase dashboard, go to **Authentication > CONFIGURATION > URL Configuration**:
+
+    - Set the **Site URL** to your app origin, for example `http://localhost:3000` for local development or `https://your-app.com` for production.
+    - Under **Redirect URLs**, select **Add URL** and add your `/auth/callback` routes, for example `http://localhost:3000/auth/callback` and your production URL (`https://your-app.com/auth/callback`).
+    - Select **Save**.
+
+### 3. Add Kinde authentication to your Supabase app
+
+Add Kinde authentication to your Supabase app with the `signInWithOAuth` method:
+
+```typescript title="JavaScript example"
+const { data, error } = await supabase.auth.signInWithOAuth({
+  provider: 'custom:kinde',
+});
+```
+
+See the [Supabase documentation](https://supabase.com/docs/guides/auth/custom-oauth-providers) for more details.
+
+To add Kinde authentication to a Next.js app with Supabase:
+
+1. To create a new Supabase Next.js project, run:
+
     ```bash
     npx create-next-app -e with-supabase
     ```
-    
-2. Set a name for your project (e.g: `kinde-with-supabase`)
-3. Go into the project directory:
-    
+
+2. Add the following to your `.env.local` file:
+
+    ```env title="env.local"
+    NEXT_PUBLIC_KINDE_DOMAIN=https://<your_business>.kinde.com
     ```
-    cd kinde-with-supabase
-    ```
-    
-4. Install the Kinde dependency with this command:
-    
+
+    You can use either your Kinde domain (`https://your_business.kinde.com`) or your [Custom domain](/build/domains/pointing-your-domain/) (`https://auth.your_business.com`). Use the same domain you used for the Issuer URL in the previous step.
+
+3. Create the required files:
+
     ```bash
-    npm install @kinde-oss/kinde-auth-nextjs jsonwebtoken
-    npm install --save-dev @types/jsonwebtoken
+    mkdir -p app/auth/callback
+    touch components/login-button.tsx
+    touch components/register-button.tsx
+    touch app/auth/callback/route.ts
     ```
-    
-5. Create the Kinde auth endpoint in this path **app/api/auth/[kindeAuth]**:
-    
-    ```bash
-    mkdir -p app/api/auth/[kindeAuth]
-    touch app/api/auth/[kindeAuth]/route.js
-    ```
-    
-6. Open the newly created `route.js` file, enter the following code, and save the file:
-    
-    ```jsx
-    import { handleAuth } from "@kinde-oss/kinde-auth-nextjs/server"
-    export const GET = handleAuth()
-    ```
-    
-7. Create an environment variables file `.env.local` by typing:
-    
-    ```sql
-    touch .env.local
-    ```
-    
-8. Add the following to your `.env.local` file:
-    - The Kinde environment vars details you copied earlier. You can get these again from your Kinde application Quick start page.
-    - The Supabase Project URL and Anon public key. You can get these from **Supabase > Project Settings > Data API.**
-    
-    ```
-    KINDE_CLIENT_ID=<kinde_client_id>
-    KINDE_CLIENT_SECRET=<kinde_client_secret>
-    KINDE_ISSUER_URL=https://<your_kinde_business>.kinde.com
-    KINDE_SITE_URL=http://localhost:3000
-    KINDE_POST_LOGOUT_REDIRECT_URL=http://localhost:3000
-    KINDE_POST_LOGIN_REDIRECT_URL=http://localhost:3000/dashboard
-    NEXT_PUBLIC_SUPABASE_URL=https://<supabase_project_id>.supabase.co
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase_anon_public_key>
-    ```
-    
-9. Open the `components/header-auth.tsx` file and replace the entire content with the following. This code will replace Supabase Auth functions with Kinde Auth.
-    
-    ```sql
-    import {
-      RegisterLink,
-      LoginLink,
-      LogoutLink,
-    } from "@kinde-oss/kinde-auth-nextjs/components"
-    import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server"
-    
-    import { signOutAction } from "@/app/actions"
-    import { hasEnvVars } from "@/utils/supabase/check-env-vars"
-    import { Badge } from "./ui/badge"
-    import { Button } from "./ui/button"
-    
-    export default async function AuthButton() {
-      const { getUser } = getKindeServerSession()
-      const user = await getUser()
-    
-      if (!hasEnvVars) {
-        return (
-          <>
-            <div className='flex gap-4 items-center'>
-              <div>
-                <Badge
-                  variant={"default"}
-                  className='font-normal pointer-events-none'
-                >
-                  Please update .env.local file with anon key and url
-                </Badge>
-              </div>
-              <div className='flex gap-2'>
-                <Button
-                  asChild
-                  size='sm'
-                  variant={"outline"}
-                  disabled
-                  className='opacity-75 cursor-none pointer-events-none'
-                >
-                  <LoginLink className='btn btn-ghost sign-in-btn'>
-                    Sign in
-                  </LoginLink>
-                </Button>
-                <Button
-                  asChild
-                  size='sm'
-                  variant={"default"}
-                  disabled
-                  className='opacity-75 cursor-none pointer-events-none'
-                >
-                  <RegisterLink className='btn btn-dark'>Sign up</RegisterLink>
-                </Button>
-              </div>
-            </div>
-          </>
-        )
-      }
-      return user ? (
-        <div className='flex items-center gap-4'>
-          Hey, {user.given_name}!
-          <form action={signOutAction}>
-            <Button type='submit' variant={"outline"}>
-              <LogoutLink className='text-subtle'>Log out</LogoutLink>
-            </Button>
-          </form>
-        </div>
-      ) : (
-        <div className='flex gap-2'>
-          <Button asChild size='sm' variant={"outline"}>
-            <LoginLink className='btn btn-ghost sign-in-btn'>Sign in</LoginLink>
-          </Button>
-          <Button asChild size='sm' variant={"default"}>
-            <RegisterLink className='btn btn-dark'>Sign up</RegisterLink>
-          </Button>
-        </div>
-      )
+
+4. Open `components/login-button.tsx`, enter the following code, and save the file:
+
+    ```tsx title="components/login-button.tsx"
+    "use client";
+
+    import { createClient } from "@/lib/supabase/client";
+    import { Button } from "@/components/ui/button";
+
+    export function LoginButton() {
+      const login = async () => {
+        const supabase = createClient();
+        await supabase.auth.signInWithOAuth({
+          provider: "custom:kinde",
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+      };
+
+      return (
+        <Button size="sm" variant="default" onClick={login}>
+          Sign in
+        </Button>
+      );
     }
     ```
-    
-10. Replace `utils/supabase/server.ts` with the following code:
-    
-    ```tsx
-    import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server"
-    import { createServerClient } from "@supabase/ssr"
-    import { cookies } from "next/headers"
-    import jwt from "jsonwebtoken"
-    
-    export const createClient = async () => {
-      const cookieStore = await cookies()
-    
-      const { getIdToken } = getKindeServerSession()
-      const idToken = await getIdToken()
-      
-      let token: string
-      if (idToken) {
-        token = jwt.sign(idToken, process.env.KINDE_CLIENT_SECRET!)
-      } else {      
-        token = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      }
-    
-      return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          global: {
-            headers: {
-              Authorization: `Bearer ${token}`,
+
+5. Open `components/register-button.tsx`, enter the following code, and save the file:
+
+    ```tsx title="components/register-button.tsx"
+    "use client";
+
+    import { createClient } from "@/lib/supabase/client";
+    import { Button } from "@/components/ui/button";
+
+    export function RegisterButton() {
+      const register = async () => {
+        const supabase = createClient();
+        await supabase.auth.signInWithOAuth({
+          provider: "custom:kinde",
+          options: {
+            queryParams: {
+              prompt: "create",
             },
+            redirectTo: `${window.location.origin}/auth/callback`,
           },
-          cookies: {
-            getAll() {
-              return cookieStore.getAll()
-            },
-            setAll(cookiesToSet) {
-              try {
-                cookiesToSet.forEach(({ name, value, options }) => {
-                  cookieStore.set(name, value, options)
-                })
-              } catch (error) {
-                // The `set` method was called from a Server Component.
-                // This can be ignored if you have middleware refreshing
-                // user sessions.
-              }
-            },
-          },
+        });
+      };
+
+      return (
+        <Button size="sm" variant="default" onClick={register}>
+          Sign up
+        </Button>
+      );
+    }
+    ```
+
+6. Open `app/auth/callback/route.ts`, enter the following code, and save the file:
+
+    ```ts title="app/auth/callback/route.ts"
+    import { createClient } from "@/lib/supabase/server";
+    import { NextResponse } from "next/server";
+
+    export async function GET(request: Request) {
+      const { searchParams, origin } = new URL(request.url);
+      const code = searchParams.get("code");
+      const nextParam = searchParams.get("next") ?? "/protected";
+      // Only allow same-origin relative paths to prevent open redirects.
+      const next =
+        nextParam.startsWith("/") && !nextParam.startsWith("//")
+          ? nextParam
+          : "/protected";
+
+      if (code) {
+        const supabase = await createClient();
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error) {
+          return NextResponse.redirect(`${origin}${next}`);
         }
-      )
+      }
+
+      return NextResponse.redirect(`${origin}/auth/error?error=oauth_callback_failed`);
     }
     ```
-    
-11. Start the development environment by typing the following in your terminal:
-    
+
+7. Open `components/auth-button.tsx` and replace the login/sign-up page links with OAuth buttons:
+
+    - Remove the `Link` imports and `<Link href="/auth/login">` / `<Link href="/auth/sign-up">` buttons.
+    - Add the following imports:
+
+        ```tsx
+        import { LoginButton } from "./login-button";
+        import { RegisterButton } from "./register-button";
+        ```
+
+    - Update the logged-out state to render:
+
+        ```tsx
+        <div className="flex gap-2">
+          <LoginButton />
+          <RegisterButton />
+        </div>
+        ```
+
+    - Keep the logged-in state the same — show the user email and `<LogoutButton />`.
+
+8. Open `components/logout-button.tsx` and replace the entire file with the following. This signs out of Supabase and redirects to Kinde logout:
+
+    ```tsx title="components/logout-button.tsx"
+    "use client";
+
+    import { createClient } from "@/lib/supabase/client";
+    import { Button } from "@/components/ui/button";
+
+    export function LogoutButton() {
+      const logout = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        const kindeDomain = process.env.NEXT_PUBLIC_KINDE_DOMAIN;
+        const redirect = encodeURIComponent(window.location.origin);
+        window.location.href = `${kindeDomain}/logout?redirect=${redirect}`;
+      };
+
+      return <Button onClick={logout}>Logout</Button>;
+    }
     ```
+
+9. Open `lib/supabase/proxy.ts` and change the unauthenticated redirect from `/auth/login` to `/`:
+
+    ```ts title="lib/supabase/proxy.ts"
+    url.pathname = "/";
+    ```
+
+10. Open `app/protected/page.tsx` and change the unauthenticated redirect from `/auth/login` to `/`:
+
+    ```ts title="app/protected/page.tsx"
+    redirect("/");
+    ```
+
+### 4. Test user authentication
+
+1. Run the development server:
+
+    ```bash
     npm run dev
     ```
-    
-12. Go to http://localhost:3000 and sign up/sign in to your Kinde application to test the integration.
 
-## Step 4: Build a simple to-do app
+2. Go to http://localhost:3000 and select the **Sign up** button. You’re redirected to the Kinde hosted registration page.
 
-1. In your project directory, on a new terminal window, create a `todo` directory with a `page.tsx` file inside it by running the following command.  This file will serve as your to-do page.
-    
-    ```jsx
-    mkdir app/todo
-    touch app/todo/page.tsx
-    ```
-    
-2. Add the following code to `page.tsx` which is a basic to-do list table:
-    
-    ```tsx
-    import { createClient } from "@/utils/supabase/server"
-    
-    export default async function TodoList() {
-      const supabase = await createClient()
-      const { data: todos } = await supabase.from("todos").select()
-    
-      return (
-        <div
-          style={{ display: "flex", justifyContent: "center", marginTop: "50px" }}
-        >
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "8px",
-                    textAlign: "left",
-                    backgroundColor: "#f2f2f2",
-                  }}
-                >
-                  ID
-                </th>
-                <th
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "8px",
-                    textAlign: "left",
-                    backgroundColor: "#f2f2f2",
-                  }}
-                >
-                  Task
-                </th>
-                <th
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "8px",
-                    textAlign: "left",
-                    backgroundColor: "#f2f2f2",
-                  }}
-                >
-                  Is Complete
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {todos?.map((row) => (
-                <tr key={row.id}>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {row.id}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {row.task}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {String(row.completed_state)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )
-    }
-    ```
-    
-3. Go to http://localhost:3000/todo to preview the page. You won’t see any to-do items because we haven’t set any permissions yet.
-    
-    ![Empty to-do list](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/c71da76d-f54a-4d2e-9636-bb063b120800/public)
-    
-4. To ensure the user is redirected to the **to-do page** after they sign in, update the `KINDE_POST_LOGIN_REDIRECT_URL` in your `.env.local` file to:
-    
-    ```yaml
-    KINDE_POST_LOGIN_REDIRECT_URL=http://localhost:3000/todo
-    ```
-    
+3. Complete registration. You’re redirected to your app’s protected page.
 
-Now that your to-do app is built, proceed to update your database policies to display to-do items for the correct users.
+    ![supabase kinde app protected page screen](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/2f7698b3-63d7-4263-a0cd-5a64bb1f4c00/socialsharingimage)
 
-## Step 5: Define database policies in Supabase
+4. Go to your Kinde dashboard > **Users**. You’ll see the new user in the list.
 
-1. In Supabase, go to **SQL Editor.**
-2. Select the **plus “+” icon**, and then **Create a new snippet**.
-    
-    ![Supabase SQL editor](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/42a37169-2f8c-450c-a1ac-1420eaa50500/public)
-    
-3. Paste the following SQL code into the command window and select **Run**:
-    
-    ```sql
-    create or replace function get_user_id()
-    returns text
-    language sql stable
-    as $$
-      select nullif(current_setting('request.jwt.claims', true)::json->>'sub', '')::text;
-    $$;
-    ```
-    
-    This function extracts the `sub` field from the JSON Web Token (JWT) sent by Kinde auth. The `sub` field contains the Kinde user ID, which will allow filtering to-do items specific to each user.
-    
-4. Create another new snippet and run the following SQL statement to enable the row-level policy.
-    
-    ```sql
-    create policy "users can read only their todos"
-    on public.todos
-    for select to public
-    using (get_user_id() = user_id);
-    ```
-    
-5. Select **Save policy**.
+5. Go to your Supabase dashboard > **Authentication > MANAGE > Users**. You’ll see the same user there.
 
-Your database policy is now set up to ensure that only the authenticated user's to-do items are displayed. In the next step, you'll update your table rows to include user IDs.
-
-## Step 6: Link Kinde ID to to-do items
-
-1. Open Kinde and select **Users** to view the user list.
-2. Locate the user registered with your Supabase to-do app (e.g: Tamal Chowdhury) and select their name to view their profile.
-    
-    ![List of Kinde users](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/c2a12694-ecae-4456-53d4-ad4d9370a300/public)
-    
-3. Copy the unique **Kinde profile ID** displayed on their profile page.
-    
-    ![image.png](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/c72a3a4a-6584-4280-6b52-7c3225259900/public)
-    
-4. Go to **Table Editor** in your Supabase project, and open the **todos** table.
-5. Locate the rows corresponding to your to-do items and update the `user_id` column with the Kinde ID you copied. Save your changes.
-    
-    ![Table editor](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/d1324d66-a75a-400e-dd0c-d2a33e4f0200/public)
-    
-6. In the Kinde project, log in with the same user you signed up with. Verify that the to-do items linked to this user are now visible on the **to-do page** of your app.
-    
-    ![View to do list](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/7902061a-af32-4f82-60aa-c6c73cfef300/public)
-    
-
-This step links the Kinde user ID to specific to-do items, enabling the app to filter and display tasks based on the authenticated users.
+    ![supabase kinde user management screen](https://imagedelivery.net/skPPZTHzSlcslvHjesZQcQ/4056bfe1-e8d4-46cb-af36-da87d4fbbc00/socialsharingimage)
 
 ## Well done!
 
-You’ve successfully built a secure and personalized to-do app using Kinde for authentication and Supabase for database management. 
+You’ve connected Kinde as a custom auth provider in Supabase and wired sign-in, sign-up, and logout into your Next.js app. New users appear in both your Kinde and Supabase dashboards.
 
-With this foundation, your app is now equipped to manage user authentication and personalized data securely. You can extend this project further by adding features like task creation, deletion, updates, or even real-time collaboration.
+Next, add user-specific data with PostgreSQL and Row-Level Security by building a [to-do list app](/integrate/third-party-tools/kinde-supabase-todo-app/).
+

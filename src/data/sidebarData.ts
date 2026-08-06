@@ -9,7 +9,11 @@ const sidebarData = [
     collapsed: true,
     cardLink: "/get-started/guides/first-things-first/",
     items: [
-      {label: "Guides", autogenerate: {directory: "get-started/guides"}, collapsed: false},
+      {
+        label: "Guides",
+        autogenerate: {directory: "get-started/guides"},
+        collapsed: false
+      },
       {
         label: "Learn about Kinde",
         autogenerate: {directory: "get-started/learn-about-kinde"},
@@ -43,6 +47,11 @@ const sidebarData = [
       {
         label: "Set up options",
         autogenerate: {directory: "build/set-up-options"},
+        collapsed: false
+      },
+      {
+        label: "Self-service portal",
+        autogenerate: {directory: "build/self-service-portal"},
         collapsed: false
       },
       {label: "Environments", autogenerate: {directory: "build/environments"}, collapsed: false},
@@ -82,12 +91,53 @@ const sidebarData = [
         collapsed: false
       },
       {
-        label: "Kinde API",
+        label: "Kinde Management API",
         autogenerate: {directory: "developer-tools/kinde-api"},
         collapsed: false
       },
-      {label: "Your APIs", autogenerate: {directory: "developer-tools/your-apis"}, collapsed: false}
+      {
+        label: "Account API",
+        autogenerate: {directory: "developer-tools/account-api"},
+        collapsed: false
+      }
     ]
+  },
+  {
+    label: "Manage your APIs",
+    description: "Manage your API connections and API keys",
+    icon: "api",
+    collapsed: true,
+    cardLink: "/manage-your-apis/about-api-keys/",
+    items: [
+      {
+        label: "Register and manage your APIs",
+        autogenerate: {directory: "developer-tools/your-apis"},
+        collapsed: false
+      },
+      {
+        label: "About API keys",
+        autogenerate: {directory: "manage-your-apis/about-api-keys/"},
+        collapsed: false
+      },
+      {
+        label: "Add and manage API keys",
+        autogenerate: {directory: "manage-your-apis/add-manage-api-keys/"},
+        collapsed: false
+      },
+      {
+        label: "Test and troubleshoot",
+        autogenerate: {directory: "manage-your-apis/troubleshoot-api-keys/"},
+        collapsed: false
+      }
+    ]
+  },
+  {
+    label: "MCP Servers",
+    description: "Expose your APIs to AI agents, or manage Kinde with the Model Context Protocol",
+    icon: "mcp",
+    collapsed: true,
+    cardLink: "/mcp-servers/",
+    autogenerate: {directory: "mcp-servers"}
   },
   {
     label: "Auth and access",
@@ -127,6 +177,11 @@ const sidebarData = [
         collapsed: false
       },
       {
+        label: "Self-serve SSO",
+        autogenerate: {directory: "authenticate/self-serve-sso/"},
+        collapsed: false
+      },
+      {
         label: "Multi-factor auth",
         autogenerate: {directory: "authenticate/multi-factor-auth"},
         collapsed: false
@@ -135,19 +190,81 @@ const sidebarData = [
         label: "Social connections",
         autogenerate: {directory: "authenticate/social-sign-in"},
         collapsed: false
+      },
+      {
+        label: "Device authorization flow",
+        autogenerate: {directory: "authenticate/device-authorization-flow"},
+        collapsed: false
       }
     ]
   },
   {
-    label: "Plans and payments",
-    description: "Build plans and pricing so that your users can pay you",
+    label: "Testing",
+    description:
+      "Test your application's authentication flows, passwordless flows, and backend APIs",
+    icon: "build",
+    cardLink: "/testing/",
+    collapsed: true,
+    items: [
+      {label: "Overview", link: "/testing/"},
+      {label: "Setup test user and environment", link: "/testing/setup-test-user-environment/"},
+      {label: "Testing authentication flows", link: "/testing/testing-authentication-flows/"},
+      {label: "Testing passwordless flows", link: "/testing/testing-passwordless-flows/"},
+      {label: "Testing authenticated features", link: "/testing/testing-authenticated-features/"},
+      {label: "Testing backend APIs", link: "/testing/testing-backend-apis/"},
+      {label: "Test backend APIs with Jest", link: "/testing/test-backend-apis-jest/"},
+      {
+        label: "Cypress",
+        autogenerate: {directory: "testing/cypress"},
+        collapsed: true
+      },
+      {
+        label: "Playwright",
+        autogenerate: {directory: "testing/playwright"},
+        collapsed: true
+      }
+    ]
+  },
+  {
+    label: "Billing",
+    description: "Monetize your product, build plans, and accept payments",
     icon: "billing",
     collapsed: true,
-    cardLink: "/billing/about-payments-and-plans/",
+    cardLink: "/billing/about-billing/about-billing/",
     items: [
       {
-        label: "About payments and plans",
-        autogenerate: {directory: "billing/about-payments-and-plans"},
+        label: "About billing",
+        autogenerate: {directory: "billing/about-billing"},
+        collapsed: false
+      },
+      {
+        label: "Get started",
+        autogenerate: {directory: "billing/get-started"},
+        collapsed: false
+      },
+      {
+        label: "Manage plans",
+        autogenerate: {directory: "billing/manage-plans"},
+        collapsed: false
+      },
+      {
+        label: "Payment management",
+        autogenerate: {directory: "billing/payment-management"},
+        collapsed: false
+      },
+      {
+        label: "Subscription management",
+        autogenerate: {directory: "billing/manage-subscribers"},
+        collapsed: false
+      },
+      {
+        label: "Pricing",
+        autogenerate: {directory: "billing/pricing"},
+        collapsed: false
+      },
+      {
+        label: "Billing user experience",
+        autogenerate: {directory: "billing/billing-user-experience"},
         collapsed: false
       }
     ]
@@ -188,6 +305,11 @@ const sidebarData = [
       {
         label: "Getting started",
         autogenerate: {directory: "workflows/getting-started"},
+        collapsed: false
+      },
+      {
+        label: "Workflow tutorials",
+        autogenerate: {directory: "workflows/workflow-tutorials"},
         collapsed: false
       },
       {
@@ -234,6 +356,45 @@ const sidebarData = [
     ]
   },
   {
+    label: "Machine-to-Machine (M2M)",
+    description: "Build machine-to-machine applications",
+    collapsed: true,
+    icon: "workflow",
+    cardLink: "/machine-to-machine-applications/about-m2m/",
+    items: [
+      {
+        label: "Overview",
+        autogenerate: {directory: "machine-to-machine-applications/about-m2m"},
+        collapsed: false
+      },
+      {
+        label: "M2M application setup",
+        autogenerate: {directory: "machine-to-machine-applications/m2m-application-setup"},
+        collapsed: false
+      },
+      {
+        label: "Organization-scoped M2M apps",
+        autogenerate: {directory: "machine-to-machine-applications/organization-scoped-m2m-apps"},
+        collapsed: false
+      },
+      {
+        label: "M2M token customization",
+        autogenerate: {directory: "machine-to-machine-applications/m2m-token-customization"},
+        collapsed: false
+      },
+      {
+        label: "Automation",
+        autogenerate: {directory: "machine-to-machine-applications/m2m-workflow-automation"},
+        collapsed: false
+      },
+      {
+        label: "Troubleshooting",
+        autogenerate: {directory: "machine-to-machine-applications/troubleshooting-m2m"},
+        collapsed: false
+      }
+    ]
+  },
+  {
     label: "Manage users",
     description: "Manage user profiles, including roles and permissions",
     icon: "profile",
@@ -265,17 +426,27 @@ const sidebarData = [
   },
   {
     label: "Features and releases",
-    description: "Take control of feature development and releases  ",
+    description: "Take control of feature development and app releases",
     icon: "releases",
     collapsed: true,
     cardLink: "/releases/about/about-feature-flags/",
     items: [
-      {label: "About", autogenerate: {directory: "releases/about"}, collapsed: false},
+      {
+        label: "About",
+        autogenerate: {directory: "releases/about"},
+        collapsed: false
+      },
+      {
+        label: "Guides",
+        autogenerate: {directory: "releases/guides"},
+        collapsed: false
+      },
       {
         label: "Feature flags",
         autogenerate: {directory: "releases/feature-flags"},
         collapsed: false
       }
+
       // {
       //   label: "Plan and release",
       //   autogenerate: {directory: "releases/plan-and-release"},
